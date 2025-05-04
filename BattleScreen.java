@@ -2,10 +2,11 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
+
+import java.util.Random;
 
 public class BattleScreen implements Screen {
     private Main game;
@@ -17,8 +18,12 @@ public class BattleScreen implements Screen {
     private Batalha batalha;
     private Ataque ataqueBasico;
 
-    private EsquivaReflexo esquiva;
+    private EsquivaReflexo esquivaWASD;
+    private EsquivaReflexoSetas esquivaSetas;
     private boolean emEsquiva = false;
+    private boolean usandoSetas = false;
+
+    private Random random = new Random();
 
     public BattleScreen(Main game) {
         this.game = game;
@@ -51,8 +56,13 @@ public class BattleScreen implements Screen {
             font.draw(batch, batalha.resultado(), 50, 290);
         }
 
-        if (emEsquiva && esquiva != null) {
-            esquiva.desenhar(batch, font);
+        // Desenhar esquiva correspondente
+        if (emEsquiva) {
+            if (usandoSetas && esquivaSetas != null) {
+                esquivaSetas.desenhar(batch, font);
+            } else if (esquivaWASD != null) {
+                esquivaWASD.desenhar(batch, font);
+            }
         }
 
         batch.end();
@@ -66,24 +76,51 @@ public class BattleScreen implements Screen {
                 batalha.turnoJogador(ataqueBasico);
             }
         } else if (!emEsquiva) {
-            // Início da esquiva
-            esquiva = new EsquivaReflexo();
-            emEsquiva = true;
-        } else if (esquiva != null) {
-            esquiva.atualizar(delta);
+            // Sorteia ataque do inimigo
+            boolean ataqueBrutal = random.nextBoolean(); // true = ataque com setas
 
-            if (esquiva.finalizado()) {
-                if (esquiva.esquivouComSucesso()) {
-                    batalha.mensagem = jogador.nome + " esquivou do ataque!";
-                } else {
-                    Ataque ataque = new Ataque("Investida Sombria", inimigo.ataque);
-                    ataque.aplicar(jogador);
-                    batalha.mensagem = inimigo.nome + " atacou com " + ataque.nome + "!";
+            Ataque ataque = ataqueBrutal ?
+                new Ataque("Ataque Brutal", inimigo.ataque + 5) :
+                new Ataque("Investida Sombria", inimigo.ataque);
+
+            batalha.ultimoAtaqueInimigo = ataque;
+
+            if (ataqueBrutal) {
+                esquivaSetas = new EsquivaReflexoSetas();
+                esquivaSetas.iniciar();
+                usandoSetas = true;
+            } else {
+                esquivaWASD = new EsquivaReflexo();
+                esquivaWASD.iniciar();
+                usandoSetas = false;
+            }
+
+            emEsquiva = true;
+        } else {
+            // Atualiza esquiva
+            if (usandoSetas && esquivaSetas != null) {
+                esquivaSetas.atualizar(delta);
+                if (esquivaSetas.finalizado()) {
+                    processarResultadoEsquiva(esquivaSetas.esquivouComSucesso());
                 }
-                emEsquiva = false;
-                batalha.turnoDoJogador = true;
+            } else if (esquivaWASD != null) {
+                esquivaWASD.atualizar(delta);
+                if (esquivaWASD.finalizado()) {
+                    processarResultadoEsquiva(esquivaWASD.esquivouComSucesso());
+                }
             }
         }
+    }
+
+    private void processarResultadoEsquiva(boolean esquivou) {
+        if (esquivou) {
+            batalha.mensagem = jogador.nome + " esquivou do ataque!";
+        } else {
+            batalha.ultimoAtaqueInimigo.aplicar(jogador);
+            batalha.mensagem = inimigo.nome + " atacou com " + batalha.ultimoAtaqueInimigo.nome + "!";
+        }
+        emEsquiva = false;
+        batalha.turnoDoJogador = true;
     }
 
     @Override public void resize(int width, int height) {}
