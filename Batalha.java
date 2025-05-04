@@ -1,10 +1,16 @@
 package io.github.some_example_name;
 
+import java.util.Random;
+
 public class Batalha {
     public Personagem jogador;
     public Personagem inimigo;
     public boolean turnoDoJogador = true;
     public String mensagem = "Começo da batalha!";
+
+    public Ataque ultimoAtaqueInimigo; // ← usado para adiar o dano até ver se o jogador esquivou
+
+    private Random random = new Random();
 
     public Batalha(Personagem jogador, Personagem inimigo) {
         this.jogador = jogador;
@@ -17,10 +23,22 @@ public class Batalha {
         turnoDoJogador = false;
     }
 
-    public void turnoInimigo() {
-        Ataque ataque = new Ataque("Investida Sombria", inimigo.ataque);
-        ataque.aplicar(jogador);
-        mensagem = inimigo.nome + " atacou com " + ataque.nome + "!";
+    // Essa função apenas escolhe o ataque e armazena — não aplica o dano!
+    public void prepararAtaqueInimigo() {
+        if (random.nextBoolean()) {
+            ultimoAtaqueInimigo = new Ataque("Investida Sombria", inimigo.ataque);
+        } else {
+            int danoBrutal = (int) (inimigo.ataque * 1.5f);
+            ultimoAtaqueInimigo = new Ataque("Ataque Brutal", danoBrutal);
+        }
+    }
+
+    // Chamado se o jogador não esquivar
+    public void aplicarAtaqueInimigo() {
+        if (ultimoAtaqueInimigo != null) {
+            ultimoAtaqueInimigo.aplicar(jogador);
+            mensagem = inimigo.nome + " atacou com " + ultimoAtaqueInimigo.nome + "!";
+        }
         turnoDoJogador = true;
     }
 
