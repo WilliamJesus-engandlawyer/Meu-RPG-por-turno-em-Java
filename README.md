@@ -1,4 +1,4 @@
-# Projeto BattleScreen - Jogo de Batalha em Java com libGDX
+# Projeto de extensão - Jogo RPG por turno (Batalha) em Java com libGDX, com foco para android
 
 Este projeto é um trabalho do curso de Análise e Desenvolvimento de Sistemas da Estácio. Trata-se de um sistema batalha para um jogo rpg por turno (com foco em lançamento para android), desenvolvida em Java utilizando a biblioteca [libGDX](https://libgdx.com/).
 
